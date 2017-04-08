@@ -11,6 +11,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
 import java.util.ArrayList;
+import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.table.DefaultTableModel;
@@ -19,16 +20,19 @@ public class ChatTcpServer extends javax.swing.JFrame {
 
     private DefaultTableModel model;
     private CreateServer createServer;
+    private int port;
 
     private ServerSocket ss;
     private Socket s;
-    private BufferedReader in;  //character
-    private PrintWriter out;    //character
+
     private String msg;
+
+    private Vector clientVector;
 
     public ChatTcpServer() {
         initComponents();
-        createServer = new CreateServer();
+        clientVector = new Vector();
+
     }
 
     @SuppressWarnings("unchecked")
@@ -130,7 +134,23 @@ public class ChatTcpServer extends javax.swing.JFrame {
         setLocationRelativeTo(null);
     }// </editor-fold>//GEN-END:initComponents
 
+    public void sendFromServer() {
+
+        try {
+            Socket s2 = new Socket("127.0.0.1", port);
+            PrintWriter out = new PrintWriter(s2.getOutputStream());
+            out.println("ServerStop");
+            out.flush();
+        } catch (IOException ioei) {
+            System.out.println("IOException in Interruped : " + ioei);
+        }
+
+    }
+
     private void btStartActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btStartActionPerformed
+        port = Integer.parseInt(tfPort.getText());
+        createServer = new CreateServer(port);
+
         createServer.start();
 
         tfPort.setEnabled(false);
@@ -145,7 +165,8 @@ public class ChatTcpServer extends javax.swing.JFrame {
     }//GEN-LAST:event_btStartActionPerformed
 
     private void btStopActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btStopActionPerformed
-        //server.interrupt();
+        createServer.interrupt();
+        sendFromServer();
 
         tfPort.setEnabled(true);
 
@@ -206,68 +227,133 @@ public class ChatTcpServer extends javax.swing.JFrame {
     private javax.swing.JTextField tfPort;
     // End of variables declaration//GEN-END:variables
 
-    class Server extends Thread {
+    class ServerClient extends Thread {
+
+        private BufferedReader in;  //character
+        private PrintWriter out;    //character
+
+        Socket clientSocket;
+        String clientName;
+
+        public ServerClient(Socket soc) {
+            clientSocket = soc;
+            //step 3 create input and output
+            try {
+                in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));  //byte to character to buffered
+                out = new PrintWriter(clientSocket.getOutputStream()); //byte to character
+            } catch (IOException ioe) {
+                System.out.println("Contructor error ioe : " + ioe);
+            }
+            
+            
+
+        }
 
         public void run() {
 
+            try {
+
+                while (true) {
+                    sleep(1);
+                    //step 4 process
+                    msg = in.readLine();    //echo server ส่งอะไรมา ตอบอันนั้นกลับ
+                    //มันรวม pack in ด้วย clientSocket ไปแล้ว แล้วจะ echo ยังไง?
+
+                    /*
+                    //fisrt message get name
+                    if(msg.substring){
+                        
+                        clientName = n;
+                    }*/
+                    //for(int i=0;i<clientVector.size();i++) {
+                    //ทำต่อ
+                    out.println(msg);       //echo server
+                    out.flush();
+                    //}
+
+                }
+
+            } catch (IOException ex) {
+                System.out.println("IOE interruped : " + ex);
+            } catch (InterruptedException ie) {
+                System.out.println("ServerClient Interruped : " + ie);
+            }
+
+            //step 5 close
+            //s.close();
+            //ss.close();
         }
 
-        public void addIP(InetAddress username, int ports) {
+        public String getNames(){
+            return clientName;
         }
-
-        public void deleteIP(InetAddress username, int ports) {
+        
+        public Socket getSocket(){
+            return clientSocket;
         }
-
-        public void create() {
-
-        }
-
+        
         public void sendEveryUser(String msg) {
 
         }
+        
+        
     }
 
     class CreateServer extends Thread {
 
+        private int ports;
+
+        public CreateServer(int p) {
+            ports = p;
+        }
+
         public void run() {
-            int port = Integer.parseInt(tfPort.getText());
-            
-            try {
-                //step 1 open port
-                ss = new ServerSocket(port);
-            } catch (IOException ioe) {
-                System.out.println("IOException port : "+ioe);
-            }
 
             try {
+
+                try {
+                    //step 1 open port
+                    ss = new ServerSocket(ports);
+                } catch (IOException ioe) {
+                    System.out.println("IOException port : " + ioe);
+                }
+
                 while (true) {
+
+                    sleep(1);
+
                     //step 2 wait for connect from client
-                    s = ss.accept();    //เหมือน wait() รอ regis
-                    
-                    
-                    
-                    
-                    
-/*
-                    //step 3 create input and output
-                    in = new BufferedReader(new InputStreamReader(s.getInputStream()));  //byte to character to buffered
-                    out = new PrintWriter(s.getOutputStream()); //byte to character
+                    s = ss.accept();    //เหมือน wait() รอ socket ของ client ส่งมา
 
-                    //step 4 process
-                    msg = in.readLine();    //echo server ส่งอะไรมา ตอบอันนั้นกลับ
-                    out.println(msg);       //echo server
-                    out.flush();
+                    System.out.println("Socker Client : " + s);
 
-                    //step 5 close
+                    ServerClient serverClient = new ServerClient(s);
+
+                    serverClient.start();
+                    //ใส่ object ServerClient
+                    clientVector.addElement(serverClient);
+
+                }
+
+            } catch (IOException ioe) {
+                System.out.println("Interruped IOE : " + ioe.getMessage());
+            } catch (InterruptedException in) {
+
+                System.out.println("Interrupted E : " + in);
+
+                //ลบ socket ออกจาก server
+                clientVector.removeAllElements();
+
+                try {
                     s.close();
                     ss.close();
-*/
+                } catch (IOException ioei) {
+                    System.out.println("IOException in Interruped : " + ioei);
                 }
-                
 
-            } catch (IOException ioe) {
-                System.out.println(ioe.getMessage());
             }
         }
+
     }
+
 }

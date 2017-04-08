@@ -237,6 +237,7 @@ public class ChatTcpServer extends javax.swing.JFrame {
 
         public ServerClient(Socket soc) {
             clientSocket = soc;
+
             //step 3 create input and output
             try {
                 in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));  //byte to character to buffered
@@ -244,33 +245,18 @@ public class ChatTcpServer extends javax.swing.JFrame {
             } catch (IOException ioe) {
                 System.out.println("Contructor error ioe : " + ioe);
             }
-            
-            
-
         }
 
         public void run() {
-
             try {
-
                 while (true) {
                     sleep(1);
                     //step 4 process
+                    
                     msg = in.readLine();    //echo server ส่งอะไรมา ตอบอันนั้นกลับ
                     //มันรวม pack in ด้วย clientSocket ไปแล้ว แล้วจะ echo ยังไง?
 
-                    /*
-                    //fisrt message get name
-                    if(msg.substring){
-                        
-                        clientName = n;
-                    }*/
-                    //for(int i=0;i<clientVector.size();i++) {
-                    //ทำต่อ
-                    out.println(msg);       //echo server
-                    out.flush();
-                    //}
-
+                    sendEveryUser(msg);
                 }
 
             } catch (IOException ex) {
@@ -284,18 +270,43 @@ public class ChatTcpServer extends javax.swing.JFrame {
             //ss.close();
         }
 
-        public String getNames(){
+        public String getNames() {
             return clientName;
         }
-        
-        public Socket getSocket(){
+
+        public Socket getSocket() {
             return clientSocket;
         }
-        
+
         public void sendEveryUser(String msg) {
+            String[] msgArray = new String[3];
+            msgArray = msg.split(":");
+            char type = msgArray[0].charAt(0);//ประเภท
+            String username = msgArray[1];//ชื่อ
+            String msgBody = msgArray[2];//msg
+            //fisrt message get name
+
+            switch (type) {
+                case 'c':     //connect
+                    System.out.print(type);
+                    clientName = username;
+                    break;
+                case 'n':     //normal
+                    System.out.print(type);
+                    out.println(msg);       //echo server all แก้ด้วย
+                    out.flush();
+                    break;
+                case 'd':     //disconnect
+                    System.out.print(type);
+                    break;
+                /*                default:
+                    System.out.print(type);
+                    break;
+                 */
+            }
 
         }
-        
+
         
     }
 

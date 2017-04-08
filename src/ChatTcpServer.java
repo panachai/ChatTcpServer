@@ -32,6 +32,7 @@ public class ChatTcpServer extends javax.swing.JFrame {
     public ChatTcpServer() {
         initComponents();
         clientVector = new Vector();
+        model = (DefaultTableModel) tbUser.getModel();
 
     }
 
@@ -182,7 +183,7 @@ public class ChatTcpServer extends javax.swing.JFrame {
     }//GEN-LAST:event_btStopActionPerformed
 
     private void btClearActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btClearActionPerformed
-        //model.setRowCount(0);
+        model.setRowCount(0);
     }//GEN-LAST:event_btClearActionPerformed
 
     public static void main(String args[]) {
@@ -252,11 +253,41 @@ public class ChatTcpServer extends javax.swing.JFrame {
                 while (true) {
                     sleep(1);
                     //step 4 process
-                    
+
                     msg = in.readLine();    //echo server ส่งอะไรมา ตอบอันนั้นกลับ
                     //มันรวม pack in ด้วย clientSocket ไปแล้ว แล้วจะ echo ยังไง?
 
-                    sendEveryUser(msg);
+                    String[] msgArray = new String[3];
+                    msgArray = msg.split(":");
+                    char type = msgArray[0].charAt(0);//ประเภท
+                    String username = msgArray[1];//ชื่อ
+                    String msgBody = msgArray[2];//msg
+
+                    //fisrt message get name
+                    switch (type) {
+                        case 'c':     //connect
+                            clientName = username;
+                            model.addRow(new Object[]{clientName, "Connect"});
+                            boardcast(username, " [Connect Complete]");
+
+                            break;
+                        case 'n':     //normal
+                            System.out.print(type);
+                            boardcast(username, msgBody);
+
+                            break;
+                        case 'd':     //disconnect
+                            System.out.print(type);
+                            boardcast(username, " [Disconnect]");
+                            
+                            //check username remove ตัว socket ใน vector ด้วย
+                            break;
+                        /*                default:
+                         System.out.print(type);
+                         break;
+                         */
+                    }
+
                 }
 
             } catch (IOException ex) {
@@ -278,36 +309,25 @@ public class ChatTcpServer extends javax.swing.JFrame {
             return clientSocket;
         }
 
-        public void sendEveryUser(String msg) {
-            String[] msgArray = new String[3];
-            msgArray = msg.split(":");
-            char type = msgArray[0].charAt(0);//ประเภท
-            String username = msgArray[1];//ชื่อ
-            String msgBody = msgArray[2];//msg
-            //fisrt message get name
+        public void boardcast(String u, String m) {// u = user //m = msgbody
+            for (int i = 0; i < clientVector.size(); i++) {
 
-            switch (type) {
-                case 'c':     //connect
-                    System.out.print(type);
-                    clientName = username;
-                    break;
-                case 'n':     //normal
-                    System.out.print(type);
-                    out.println(msg);       //echo server all แก้ด้วย
-                    out.flush();
-                    break;
-                case 'd':     //disconnect
-                    System.out.print(type);
-                    break;
-                /*                default:
-                    System.out.print(type);
-                    break;
-                 */
+                //test รอแก้
+                System.out.println("test : "+clientVector.get(i));
+                //Object threadUser = clientVector.get(i);
+                //System.out.println("get Socket : " + clientVector.getSocket()); //.getSocket()
+
+                try {
+                    out = new PrintWriter(clientSocket.getOutputStream());
+                } catch (IOException ioe) {
+                    System.out.println("exception ioe : " + ioe);
+                }
+
+                out.println(u + " : " + m);       //echo server all แก้ด้วย
+                out.flush();
             }
-
         }
 
-        
     }
 
     class CreateServer extends Thread {
@@ -336,13 +356,13 @@ public class ChatTcpServer extends javax.swing.JFrame {
                     //step 2 wait for connect from client
                     s = ss.accept();    //เหมือน wait() รอ socket ของ client ส่งมา
 
-                    System.out.println("Socker Client : " + s);
-
+                    //System.out.println("Socker Client : " + s);
                     ServerClient serverClient = new ServerClient(s);
 
-                    serverClient.start();
                     //ใส่ object ServerClient
                     clientVector.addElement(serverClient);
+                    
+                    serverClient.start();
 
                 }
 

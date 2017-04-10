@@ -243,6 +243,9 @@ public class ChatTcpServer extends javax.swing.JFrame {
             try {
                 in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));  //byte to character to buffered
                 out = new PrintWriter(clientSocket.getOutputStream()); //byte to character
+                
+                
+                
             } catch (IOException ioe) {
                 System.out.println("Contructor error ioe : " + ioe);
             }
@@ -312,8 +315,10 @@ public class ChatTcpServer extends javax.swing.JFrame {
         public void boardcast(String u, String m) {// u = user //m = msgbody
             for (int i = 0; i < clientVector.size(); i++) {
 
-                //test รอแก้
-                System.out.println("test : "+clientVector.get(i));
+                //test รอแก้ .getSocket() .getText() .elementAt(i) .get(i) ((JTextField)value).getText();
+                
+                System.out.println("test : " + clientVector.elementAt(i));
+                
                 //Object threadUser = clientVector.get(i);
                 //System.out.println("get Socket : " + clientVector.getSocket()); //.getSocket()
 
@@ -359,6 +364,10 @@ public class ChatTcpServer extends javax.swing.JFrame {
                     //System.out.println("Socker Client : " + s);
                     ServerClient serverClient = new ServerClient(s);
 
+                    System.out.println("Socket serclient : "+serverClient.getSocket());
+                    System.out.println("Names serclient : "+serverClient.getNames());
+                    
+                            
                     //ใส่ object ServerClient
                     clientVector.addElement(serverClient);
                     

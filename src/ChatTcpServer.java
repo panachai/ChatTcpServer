@@ -151,20 +151,30 @@ public class ChatTcpServer extends javax.swing.JFrame {
     }
 
     private void btStartActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btStartActionPerformed
-        port = Integer.parseInt(tfPort.getText());
-        createServer = new CreateServer(port);
+        //port = Integer.parseInt(tfPort.getText());
+        try {
+            port = Integer.parseInt(tfPort.getText());
 
-        createServer.start();
+            createServer = new CreateServer(port);
 
-        tfPort.setEnabled(false);
+            createServer.start();
 
-        btStart.setEnabled(false);
-        btStop.setEnabled(true);
+            tfPort.setEnabled(false);
 
-        btClear.setEnabled(true);
+            btStart.setEnabled(false);
+            btStop.setEnabled(true);
 
-        //show table status
-        tbUser.setEnabled(true);
+            btClear.setEnabled(true);
+
+            //show table status
+            tbUser.setEnabled(true);
+        } catch (NumberFormatException e) {
+            lbStatus.setText("กรุณาป้อนตัวเลข");
+            tfPort.requestFocus();
+            tfPort.setText("");
+        }
+
+
     }//GEN-LAST:event_btStartActionPerformed
 
     private void btStopActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btStopActionPerformed
@@ -263,8 +273,8 @@ public class ChatTcpServer extends javax.swing.JFrame {
 
                     msg = in.readLine();    //echo server ส่งอะไรมา ตอบอันนั้นกลับ
                     //มันรวม pack in ด้วย clientSocket ไปแล้ว แล้วจะ echo ยังไง?
-                    
-                    System.out.println("before split to array : "+msg);
+
+                    System.out.println("before split to array : " + msg);
 
                     String[] msgArray = new String[3];
                     msgArray = msg.split(":");
